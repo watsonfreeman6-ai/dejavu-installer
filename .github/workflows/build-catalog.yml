@@ -1,0 +1,31 @@
+name: Build Catalog
+on:
+  push:
+    paths: ['catalog/**']
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6am UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Build catalog.db
+        run: |
+          python scripts/build_catalog.py --output catalog.db --source catalog
+      
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: catalog-latest
+          files: catalog.db
+          body: "Automated catalog build $(date +%Y-%m-%d)"
+          make_latest: true
